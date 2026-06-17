@@ -43,4 +43,4 @@ jobs:
           gradle-version: 8.10.2
       - name: Build Fabric Mod
         working-directory: mods/fabric
-        run: gradle build --stacktrace
+        run: gradle build --stacktrace --no-daemon
