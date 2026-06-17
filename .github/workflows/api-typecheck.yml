@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          gradle build --stacktrace --no-daemon > ../../fabric-build.log 2>&1
+          gradle build --stacktrace --no-daemon --warning-mode all > ../../fabric-build.log 2>&1
           status=$?
           cat ../../fabric-build.log
           exit $status
