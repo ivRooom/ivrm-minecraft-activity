@@ -1,0 +1,45 @@
+{
+  "server": {
+    "id": "ivrm-craft",
+    "name": "いゔる。ーむ くらふと",
+    "environment": "production"
+  },
+  "api": {
+    "baseUrl": "https://api.ivrm.jp",
+    "serverSecret": "CHANGE_ME",
+    "timeoutSeconds": 5,
+    "retryEnabled": true
+  },
+  "heartbeat": {
+    "enabled": true,
+    "intervalSeconds": 300
+  },
+  "afk": {
+    "enabled": true,
+    "thresholdSeconds": 900,
+    "excludeFromRanking": true
+  },
+  "events": {
+    "login": true,
+    "logout": true,
+    "death": true,
+    "advancement": true,
+    "chatCount": true,
+    "blockPlace": true,
+    "blockBreak": true,
+    "dimensionTime": true
+  },
+  "rewards": {
+    "enabled": true,
+    "claimCommandEnabled": true,
+    "executeCommands": true
+  },
+  "queue": {
+    "enabled": true,
+    "maxEvents": 10000,
+    "flushIntervalSeconds": 60
+  },
+  "debug": {
+    "enabled": false
+  }
+}
