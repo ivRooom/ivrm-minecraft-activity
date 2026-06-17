@@ -10,10 +10,6 @@ base {
     archivesName = project.archives_base_name
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -40,7 +36,7 @@ java {
 }
 
 jar {
-    from("LICENSE") {
+    from(rootProject.file("../../LICENSE")) {
         rename { "${it}_${project.base.archivesName.get()}" }
     }
 }
