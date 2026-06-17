@@ -2,7 +2,13 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { createSignature, isFreshTimestamp, safeEqualHex } from '../security.js';
 
-export const minecraftRoutes = new Hono();
+type Variables = {
+  rawBody: string;
+  eventId: string;
+  serverId: string;
+};
+
+export const minecraftRoutes = new Hono<{ Variables: Variables }>();
 
 const playerEventSchema = z.object({
   serverId: z.string().min(1),
@@ -29,7 +35,8 @@ minecraftRoutes.use('*', async (c, next) => {
   c.set('eventId', eventId);
   c.set('serverId', serverId);
 
-  const secret = process.env[`IVRM_SERVER_SECRET_${serverId.replaceAll('-', '_').toUpperCase()}`] ?? process.env.IVRM_SERVER_SECRET;
+  const serverSecretName = `IVRM_SERVER_SECRET_${serverId.replaceAll('-', '_').toUpperCase()}`;
+  const secret = process.env[serverSecretName] ?? process.env.IVRM_SERVER_SECRET;
   if (!secret) {
     return c.json({ ok: false, error: 'server_secret_not_configured' }, 500);
   }
