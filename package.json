@@ -1,0 +1,16 @@
+{
+  "name": "ivrm-minecraft-activity",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.12.1",
+  "scripts": {
+    "api:dev": "pnpm --filter @ivrm/minecraft-activity-api dev",
+    "api:build": "pnpm --filter @ivrm/minecraft-activity-api build",
+    "api:typecheck": "pnpm --filter @ivrm/minecraft-activity-api typecheck",
+    "mod:build": "cd mods/fabric && ./gradlew build"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
