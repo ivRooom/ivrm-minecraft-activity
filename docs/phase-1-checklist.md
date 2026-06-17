@@ -12,6 +12,8 @@
 - [x] heartbeat scaffold
 - [x] AFK scaffold
 - [x] admin commands scaffold
+- [x] Fabric build check on GitHub Actions
+- [ ] Gradle wrapper
 - [ ] reward claim command
 - [ ] death/stat event collection
 - [ ] block counter batching

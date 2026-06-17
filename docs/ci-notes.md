@@ -2,12 +2,30 @@
 
 ## Current workflows
 
-- API Typecheck
+- Project Checks
+
+Project Checks includes API Typecheck and Fabric Build.
+
+## Fabric Build
+
+Runtime:
+
+```text
+Java 17
+Gradle 8.12.1
+```
+
+Command:
+
+```bash
+gradle build
+```
 
 ## Pending workflows
 
-- Fabric build
 - API unit tests
 - Docker image build
 
-Fabric build workflow should be added after the Gradle wrapper is committed.
+## Notes
+
+Fabric Loom needs Gradle 8.12 or newer. Gradle wrapper will be added after this build setup is stable.
