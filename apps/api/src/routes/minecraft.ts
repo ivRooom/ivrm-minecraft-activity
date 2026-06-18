@@ -10,6 +10,7 @@ import {
 } from '../repositories/minecraft-session-repository.js';
 import { createSignature, isFreshTimestamp, safeEqualHex } from '../security.js';
 import { aggregateClosedMinecraftSession } from '../services/minecraft-activity-aggregation-service.js';
+import { drawDailyRandomReward } from '../services/minecraft-daily-random-reward-service.js';
 
 type Variables = {
   rawBody: string;
@@ -279,4 +280,23 @@ minecraftRoutes.post('/events/player-stat', async (c) => {
   });
 
   return c.json({ ok: true, type: 'player-stat', duplicate });
+});
+
+minecraftRoutes.post('/rewards/daily-random/draw', async (c) => {
+  const payload = parsePayload(c.get('rawBody'), playerEventSchema);
+  const serverId = c.get('serverId');
+  validatePayloadServer(payload.serverId, serverId);
+
+  const result = await drawDailyRandomReward(getDatabase(), {
+    serverId,
+    minecraftUuid: payload.minecraftUuid,
+    minecraftName: payload.minecraftName,
+  });
+
+  if (!result.ok) {
+    const status = result.error === 'discord_link_required' ? 403 : 400;
+    return c.json(result, status);
+  }
+
+  return c.json(result);
 });
