@@ -120,7 +120,12 @@ export async function closeMinecraftSession(db: Database, input: PlayerIdentity 
     .where(eq(minecraftSessions.id, session.id))
     .returning({
       id: minecraftSessions.id,
+      serverId: minecraftSessions.serverId,
+      minecraftUuid: minecraftSessions.minecraftUuid,
+      joinedAt: minecraftSessions.joinedAt,
+      leftAt: minecraftSessions.leftAt,
       totalSeconds: minecraftSessions.totalSeconds,
+      afkSeconds: minecraftSessions.afkSeconds,
       activeSeconds: minecraftSessions.activeSeconds,
     });
 
