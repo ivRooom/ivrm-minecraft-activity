@@ -12,7 +12,7 @@
 
 ## MVP tables
 
-The first persistence milestone stores signed Minecraft events and session state.
+The first persistence milestone stores signed Minecraft events, session state, and activity aggregates.
 
 ```text
 minecraft_servers
@@ -20,14 +20,14 @@ minecraft_accounts
 minecraft_event_logs
 minecraft_sessions
 minecraft_session_heartbeats
+minecraft_daily_stats
+minecraft_monthly_stats
 ```
 
 ## Core tables planned later
 
 ```text
 users
-minecraft_daily_stats
-minecraft_monthly_stats
 minecraft_player_counters
 minecraft_dimension_times
 minecraft_afk_periods
@@ -132,6 +132,73 @@ sent_at timestamptz not null
 created_at timestamptz not null default now()
 ```
 
+## minecraft_daily_stats
+
+```sql
+id uuid primary key
+server_id text not null references minecraft_servers(id)
+minecraft_uuid text not null
+date date not null
+login_count integer not null default 0
+active_seconds integer not null default 0
+afk_seconds integer not null default 0
+death_count integer not null default 0
+chat_count integer not null default 0
+block_place_count integer not null default 0
+block_break_count integer not null default 0
+advancement_count integer not null default 0
+created_at timestamptz not null default now()
+updated_at timestamptz not null default now()
+unique(server_id, minecraft_uuid, date)
+```
+
+A closed session is split by Asia/Tokyo calendar day before being added to this table.
+
+## minecraft_monthly_stats
+
+```sql
+id uuid primary key
+server_id text not null references minecraft_servers(id)
+minecraft_uuid text not null
+year_month text not null
+login_days integer not null default 0
+login_count integer not null default 0
+active_seconds integer not null default 0
+afk_seconds integer not null default 0
+death_count integer not null default 0
+chat_count integer not null default 0
+block_place_count integer not null default 0
+block_break_count integer not null default 0
+advancement_count integer not null default 0
+created_at timestamptz not null default now()
+updated_at timestamptz not null default now()
+unique(server_id, minecraft_uuid, year_month)
+```
+
+`login_days` increments only when the first daily row for a player/date is created.
+
+## Aggregation behavior
+
+```text
+logout event
+  -> close active session
+  -> calculate total_seconds / active_seconds
+  -> split session by Asia/Tokyo date
+  -> upsert minecraft_daily_stats
+  -> upsert minecraft_monthly_stats
+```
+
+Example:
+
+```text
+login:  2026-06-17 23:30 Asia/Tokyo
+logout: 2026-06-18 01:30 Asia/Tokyo
+
+minecraft_daily_stats:
+2026-06-17: 30 minutes
+2026-06-18: 90 minutes
+```
+
 ## Important indexes
 
 ```sql
@@ -143,6 +210,12 @@ create index idx_minecraft_sessions_active on minecraft_sessions(server_id, mine
 create index idx_minecraft_sessions_uuid_joined_at on minecraft_sessions(minecraft_uuid, joined_at desc);
 create index idx_minecraft_heartbeats_session_sent_at on minecraft_session_heartbeats(session_id, sent_at desc);
 create index idx_minecraft_heartbeats_server_id on minecraft_session_heartbeats(server_id);
+create unique index minecraft_daily_stats_server_uuid_date_unique on minecraft_daily_stats(server_id, minecraft_uuid, date);
+create index idx_minecraft_daily_stats_server_date_active on minecraft_daily_stats(server_id, date, active_seconds);
+create index idx_minecraft_daily_stats_uuid_date on minecraft_daily_stats(minecraft_uuid, date);
+create unique index minecraft_monthly_stats_server_uuid_month_unique on minecraft_monthly_stats(server_id, minecraft_uuid, year_month);
+create index idx_minecraft_monthly_stats_server_month_active on minecraft_monthly_stats(server_id, year_month, active_seconds);
+create index idx_minecraft_monthly_stats_uuid_month on minecraft_monthly_stats(minecraft_uuid, year_month);
 ```
 
 ## Supabase notes
