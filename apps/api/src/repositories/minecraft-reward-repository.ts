@@ -78,7 +78,6 @@ export async function createDailyRandomRewardDraw(db: Database, input: {
   date: string;
   poolId: string;
   rewardItemId: string;
-  rewardGrantId: string;
   rarity: string;
   rewardName: string;
   probability: string;
@@ -91,11 +90,10 @@ export async function createDailyRandomRewardDraw(db: Database, input: {
       date: input.date,
       poolId: input.poolId,
       rewardItemId: input.rewardItemId,
-      rewardGrantId: input.rewardGrantId,
       rarity: input.rarity,
       rewardName: input.rewardName,
       probability: input.probability,
-      status: 'granted',
+      status: 'drawn',
     })
     .onConflictDoNothing({
       target: [
@@ -114,4 +112,27 @@ export async function createDailyRandomRewardDraw(db: Database, input: {
     });
 
   return draw ?? null;
+}
+
+export async function attachRewardGrantToRandomRewardDraw(db: Database, input: {
+  drawId: string;
+  rewardGrantId: string;
+}) {
+  const [draw] = await db
+    .update(minecraftRandomRewardDraws)
+    .set({
+      rewardGrantId: input.rewardGrantId,
+      status: 'granted',
+    })
+    .where(eq(minecraftRandomRewardDraws.id, input.drawId))
+    .returning({
+      id: minecraftRandomRewardDraws.id,
+      rewardGrantId: minecraftRandomRewardDraws.rewardGrantId,
+      rarity: minecraftRandomRewardDraws.rarity,
+      rewardName: minecraftRandomRewardDraws.rewardName,
+      probability: minecraftRandomRewardDraws.probability,
+      status: minecraftRandomRewardDraws.status,
+    });
+
+  return draw;
 }
