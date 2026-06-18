@@ -19,6 +19,8 @@ Signature payload:
 METHOD + "\n" + PATH + "\n" + TIMESTAMP + "\n" + EVENT_ID + "\n" + BODY
 ```
 
+For GET requests, `PATH` means URL pathname only. Query parameters are not included in the signature payload.
+
 ## Minecraft Mod endpoints
 
 | Method | Path | Purpose |
@@ -29,7 +31,7 @@ METHOD + "\n" + PATH + "\n" + TIMESTAMP + "\n" + EVENT_ID + "\n" + BODY
 | POST | `/v1/minecraft/events/afk` | AFK start/end |
 | POST | `/v1/minecraft/events/player-stat` | death/chat/block/advancement counters |
 | POST | `/v1/minecraft/rewards/daily-random/draw` | daily free random reward draw |
-| GET | `/v1/minecraft/rewards/pending?serverId=ivrm-craft&uuid=...` | pending rewards |
+| GET | `/v1/minecraft/rewards/pending?uuid=...` | pending rewards |
 | POST | `/v1/minecraft/rewards/ack` | reward delivery ack |
 | GET | `/v1/minecraft/server-config/ivrm-craft` | server-specific config |
 
@@ -124,4 +126,44 @@ If the Minecraft account is not linked to Discord, the API returns:
 }
 ```
 
-The draw API creates a pending `minecraft_reward_grants` row. Actual delivery is handled by the rewards claim/ack flow in a later phase.
+The draw API creates a pending `minecraft_reward_grants` row. Actual delivery is handled by the rewards claim/ack flow.
+
+## Pending rewards response example
+
+```json
+{
+  "ok": true,
+  "rewards": [
+    {
+      "id": "00000000-0000-0000-0000-000000000000",
+      "rewardType": "daily_random",
+      "rewardName": "パン 8個",
+      "commands": ["give {player} minecraft:bread 8"],
+      "grantedAt": "2026-06-18T12:00:00.000Z",
+      "expiresAt": null
+    }
+  ]
+}
+```
+
+## Reward ack request example
+
+```json
+{
+  "serverId": "ivrm-craft",
+  "minecraftUuid": "00000000-0000-0000-0000-000000000000",
+  "rewardGrantId": "00000000-0000-0000-0000-000000000000",
+  "deliveryStatus": "delivered",
+  "deliveredAt": "2026-06-18T12:01:00.000Z"
+}
+```
+
+## Reward ack response example
+
+```json
+{
+  "ok": true,
+  "delivered": true,
+  "alreadyDelivered": false
+}
+```
