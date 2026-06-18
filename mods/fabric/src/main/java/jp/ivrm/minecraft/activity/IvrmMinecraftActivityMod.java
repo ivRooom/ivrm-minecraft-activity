@@ -2,6 +2,7 @@ package jp.ivrm.minecraft.activity;
 
 import jp.ivrm.minecraft.activity.api.ApiClient;
 import jp.ivrm.minecraft.activity.command.IvrmActivityCommand;
+import jp.ivrm.minecraft.activity.command.IvrmRewardCommand;
 import jp.ivrm.minecraft.activity.config.ActivityConfig;
 import jp.ivrm.minecraft.activity.player.PlayerActivityTracker;
 import jp.ivrm.minecraft.activity.queue.LocalEventQueue;
@@ -31,6 +32,7 @@ public final class IvrmMinecraftActivityMod implements ModInitializer {
 
         tracker.register();
         IvrmActivityCommand.register(this);
+        IvrmRewardCommand.register(this);
 
         LOGGER.info("IVRM Minecraft Activity initialized for server_id={}", config.server.id);
     }
