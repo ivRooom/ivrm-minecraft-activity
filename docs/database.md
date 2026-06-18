@@ -7,18 +7,27 @@
 - Raw event logs are retained for a limited period.
 - Aggregated daily/monthly stats are retained long term.
 - Reward grants must be idempotent.
+- Browser clients do not connect to Supabase directly for this feature. `api.ivrm.jp` connects to PostgreSQL with `DATABASE_URL`.
+- Tables in `public` must have RLS enabled and no public policies until a direct Data API use case is explicitly designed.
 
-## Core tables
+## MVP tables
+
+The first persistence milestone stores signed Minecraft events and session state.
+
+```text
+minecraft_servers
+minecraft_accounts
+minecraft_event_logs
+minecraft_sessions
+minecraft_session_heartbeats
+```
+
+## Core tables planned later
 
 ```text
 users
-minecraft_accounts
-minecraft_servers
-minecraft_sessions
-minecraft_session_heartbeats
 minecraft_daily_stats
 minecraft_monthly_stats
-minecraft_event_logs
 minecraft_player_counters
 minecraft_dimension_times
 minecraft_afk_periods
@@ -33,14 +42,33 @@ minecraft_award_roles
 minecraft_whitelist_requests
 ```
 
+## minecraft_servers
+
+```sql
+id text primary key
+name text not null
+environment text not null default 'production'
+enabled boolean not null default true
+created_at timestamptz not null default now()
+updated_at timestamptz not null default now()
+```
+
+Initial seed:
+
+```text
+id: ivrm-craft
+name: いゔる。ーむ くらふと
+environment: production
+enabled: true
+```
+
 ## minecraft_accounts
 
 ```sql
 id uuid primary key
-user_id uuid null
-discord_user_id text null
 minecraft_uuid text not null unique
 minecraft_name text not null
+discord_user_id text null
 linked_at timestamptz null
 verified_at timestamptz null
 whitelisted_at timestamptz null
@@ -48,11 +76,26 @@ created_at timestamptz not null default now()
 updated_at timestamptz not null default now()
 ```
 
+## minecraft_event_logs
+
+```sql
+id uuid primary key
+event_id text not null unique
+server_id text not null references minecraft_servers(id)
+event_type text not null
+minecraft_uuid text not null
+minecraft_name text not null
+payload_json jsonb not null
+received_at timestamptz not null default now()
+```
+
+`event_id` is the idempotency key. If the same event is resent, the API returns `duplicate: true` and does not run session side effects again.
+
 ## minecraft_sessions
 
 ```sql
 id uuid primary key
-server_id text not null
+server_id text not null references minecraft_servers(id)
 minecraft_uuid text not null
 minecraft_name text not null
 joined_at timestamptz not null
@@ -61,72 +104,60 @@ last_seen_at timestamptz not null
 total_seconds integer not null default 0
 afk_seconds integer not null default 0
 active_seconds integer not null default 0
-status text not null
+status text not null default 'active'
 created_at timestamptz not null default now()
 updated_at timestamptz not null default now()
 ```
 
-## minecraft_daily_stats
+Current statuses:
 
-```sql
-id uuid primary key
-server_id text not null
-minecraft_uuid text not null
-date date not null
-login_count integer not null default 0
-active_seconds integer not null default 0
-afk_seconds integer not null default 0
-death_count integer not null default 0
-chat_count integer not null default 0
-block_place_count integer not null default 0
-block_break_count integer not null default 0
-advancement_count integer not null default 0
-created_at timestamptz not null default now()
-updated_at timestamptz not null default now()
-unique(server_id, minecraft_uuid, date)
+```text
+active
+closed
+replaced
 ```
 
-## minecraft_reward_grants
+`replaced` is used when a new login arrives while an old active session remains open.
+
+## minecraft_session_heartbeats
 
 ```sql
 id uuid primary key
-server_id text not null
+session_id uuid null references minecraft_sessions(id) on delete cascade
+server_id text not null references minecraft_servers(id)
 minecraft_uuid text not null
-reward_rule_id uuid not null
-reward_type text not null
-reward_name text not null
-status text not null
-commands_json jsonb not null
-granted_at timestamptz not null
-delivered_at timestamptz null
-expires_at timestamptz null
+dimension text null
+afk boolean not null default false
+sent_at timestamptz not null
 created_at timestamptz not null default now()
-updated_at timestamptz not null default now()
-```
-
-## minecraft_random_reward_draws
-
-```sql
-id uuid primary key
-server_id text not null
-minecraft_uuid text not null
-date date not null
-pool_id uuid not null
-rarity text not null
-reward_name text not null
-probability numeric not null
-status text not null
-drawn_at timestamptz not null
-delivered_at timestamptz null
-created_at timestamptz not null default now()
-unique(server_id, minecraft_uuid, date)
 ```
 
 ## Important indexes
 
 ```sql
+create unique index minecraft_accounts_minecraft_uuid_unique on minecraft_accounts(minecraft_uuid);
+create unique index minecraft_event_logs_event_id_unique on minecraft_event_logs(event_id);
+create index idx_minecraft_event_logs_server_received_at on minecraft_event_logs(server_id, received_at desc);
+create index idx_minecraft_event_logs_event_type on minecraft_event_logs(event_type);
+create index idx_minecraft_sessions_active on minecraft_sessions(server_id, minecraft_uuid, status) where status = 'active';
 create index idx_minecraft_sessions_uuid_joined_at on minecraft_sessions(minecraft_uuid, joined_at desc);
-create index idx_minecraft_daily_stats_month on minecraft_daily_stats(server_id, date);
-create index idx_minecraft_event_logs_event_id on minecraft_event_logs(event_id);
-create index idx_minecraft_reward_grants_pending on minecraft_reward_grants(server_id, minecraft_uuid, status);
+create index idx_minecraft_heartbeats_session_sent_at on minecraft_session_heartbeats(session_id, sent_at desc);
+create index idx_minecraft_heartbeats_server_id on minecraft_session_heartbeats(server_id);
+```
+
+## Supabase notes
+
+Use the Transaction pooler connection string for Cloud Run.
+
+```env
+DATABASE_URL=postgresql://postgres.xxxxx:YOUR_DB_PASSWORD@aws-xxxx.pooler.supabase.com:6543/postgres
+```
+
+Postgres.js must disable prepared statements when using the transaction pooler.
+
+```ts
+postgres(process.env.DATABASE_URL!, {
+  prepare: false,
+  ssl: 'require',
+});
 ```
