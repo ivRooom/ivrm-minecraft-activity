@@ -33,12 +33,24 @@ export async function upsertMinecraftAccount(db: Database, input: UpsertMinecraf
   return account;
 }
 
-export async function isMinecraftAccountLinked(db: Database, minecraftUuid: string): Promise<boolean> {
+export async function getMinecraftAccount(db: Database, minecraftUuid: string) {
   const [account] = await db
-    .select({ discordUserId: minecraftAccounts.discordUserId })
+    .select({
+      id: minecraftAccounts.id,
+      minecraftUuid: minecraftAccounts.minecraftUuid,
+      minecraftName: minecraftAccounts.minecraftName,
+      discordUserId: minecraftAccounts.discordUserId,
+      linkedAt: minecraftAccounts.linkedAt,
+      verifiedAt: minecraftAccounts.verifiedAt,
+    })
     .from(minecraftAccounts)
     .where(eq(minecraftAccounts.minecraftUuid, minecraftUuid))
     .limit(1);
 
+  return account ?? null;
+}
+
+export async function isMinecraftAccountLinked(db: Database, minecraftUuid: string): Promise<boolean> {
+  const account = await getMinecraftAccount(db, minecraftUuid);
   return Boolean(account?.discordUserId);
 }
