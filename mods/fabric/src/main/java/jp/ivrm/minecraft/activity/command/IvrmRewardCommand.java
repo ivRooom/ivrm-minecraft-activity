@@ -18,29 +18,34 @@ public final class IvrmRewardCommand {
     }
 
     private static void register(CommandDispatcher<ServerCommandSource> dispatcher, IvrmMinecraftActivityMod mod) {
-        dispatcher.register(literal("ivrm")
-                .then(literal("rewards")
-                        .executes(context -> {
-                            ServerPlayerEntity player = context.getSource().getPlayer();
-                            mod.listRewards(player);
-                            return 1;
-                        })
-                        .then(literal("claim")
+        dispatcher.register(
+                literal("ivrm")
+                        .then(literal("rewards")
                                 .executes(context -> {
                                     ServerPlayerEntity player = context.getSource().getPlayer();
-                                    mod.claimRewards(player, false);
+                                    mod.listRewards(player);
                                     return 1;
                                 })
-                                .then(literal("all")
+                                .then(literal("claim")
                                         .executes(context -> {
                                             ServerPlayerEntity player = context.getSource().getPlayer();
-                                            mod.claimRewards(player, true);
+                                            mod.claimRewards(player, false);
                                             return 1;
-                                        })))))
-                .then(literal("reward-help")
-                        .executes(context -> {
-                            context.getSource().sendFeedback(() -> Text.literal("/ivrm rewards, /ivrm rewards claim, /ivrm rewards claim all"), false);
-                            return 1;
-                        })));
+                                        })
+                                        .then(literal("all")
+                                                .executes(context -> {
+                                                    ServerPlayerEntity player = context.getSource().getPlayer();
+                                                    mod.claimRewards(player, true);
+                                                    return 1;
+                                                }))))
+                        .then(literal("reward-help")
+                                .executes(context -> {
+                                    context.getSource().sendFeedback(
+                                            () -> Text.literal("/ivrm rewards, /ivrm rewards claim, /ivrm rewards claim all"),
+                                            false
+                                    );
+                                    return 1;
+                                }))
+        );
     }
 }
