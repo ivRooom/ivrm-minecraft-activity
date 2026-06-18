@@ -110,6 +110,28 @@ Reward generated
   -> reward_grant status=delivered
 ```
 
+## Claim commands
+
+```text
+/ivrm rewards
+/ivrm rewards claim
+/ivrm rewards claim all
+```
+
+`/ivrm rewards` lists pending rewards. `/ivrm rewards claim` delivers the oldest pending reward. `/ivrm rewards claim all` delivers all pending rewards returned by the API.
+
+## Delivery safety
+
+The API returns only allowlisted reward commands. The Fabric Mod validates the commands again before execution.
+
+MVP allows only:
+
+```text
+give {player} ...
+```
+
+After successful command execution, the Mod sends delivery ack to the API and the API updates `minecraft_reward_grants.status` to `delivered`.
+
 ## Command allowlist
 
 MVP allows only `give`. Later phases can add `title`, `tellraw`, `effect`, and role-related actions through Lunaria.
