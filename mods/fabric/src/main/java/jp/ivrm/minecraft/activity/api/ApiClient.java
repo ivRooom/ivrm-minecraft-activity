@@ -24,23 +24,9 @@ public final class ApiClient {
     }
 
     public CompletableFuture<Boolean> postEvent(String path, String eventId, String body) {
-        String timestamp = Instant.now().toString();
-        String signature = SignatureUtil.sign(config.api.serverSecret, "POST", path, timestamp, eventId, body);
-        URI uri = URI.create(config.api.baseUrl + path);
-
-        HttpRequest request = HttpRequest.newBuilder(uri)
-                .timeout(Duration.ofSeconds(config.api.timeoutSeconds))
-                .header("Content-Type", "application/json")
-                .header("X-IVRM-Server-Id", config.server.id)
-                .header("X-IVRM-Timestamp", timestamp)
-                .header("X-IVRM-Event-Id", eventId)
-                .header("X-IVRM-Signature", signature)
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-
-        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+        return postSigned(path, eventId, body)
                 .thenApply(response -> {
-                    boolean ok = response.statusCode() >= 200 && response.statusCode() < 300;
+                    boolean ok = response.isSuccess();
                     if (!ok) {
                         IvrmMinecraftActivityMod.LOGGER.warn("Activity API returned status={} path={} body={}", response.statusCode(), path, response.body());
                     }
@@ -50,5 +36,47 @@ public final class ApiClient {
                     IvrmMinecraftActivityMod.LOGGER.warn("Activity API request failed path={} eventId={}", path, eventId, error);
                     return false;
                 });
+    }
+
+    public CompletableFuture<ApiResponse> getSigned(String pathWithQuery, String eventId) {
+        return sendSigned("GET", pathWithQuery, eventId, "");
+    }
+
+    public CompletableFuture<ApiResponse> postSigned(String path, String eventId, String body) {
+        return sendSigned("POST", path, eventId, body);
+    }
+
+    private CompletableFuture<ApiResponse> sendSigned(String method, String pathWithQuery, String eventId, String body) {
+        String timestamp = Instant.now().toString();
+        String signaturePath = pathWithQuery.split("\\?", 2)[0];
+        String signature = SignatureUtil.sign(config.api.serverSecret, method, signaturePath, timestamp, eventId, body);
+        URI uri = URI.create(config.api.baseUrl + pathWithQuery);
+
+        HttpRequest.Builder builder = HttpRequest.newBuilder(uri)
+                .timeout(Duration.ofSeconds(config.api.timeoutSeconds))
+                .header("Content-Type", "application/json")
+                .header("X-IVRM-Server-Id", config.server.id)
+                .header("X-IVRM-Timestamp", timestamp)
+                .header("X-IVRM-Event-Id", eventId)
+                .header("X-IVRM-Signature", signature);
+
+        if ("GET".equals(method)) {
+            builder.GET();
+        } else {
+            builder.method(method, HttpRequest.BodyPublishers.ofString(body));
+        }
+
+        return client.sendAsync(builder.build(), HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> new ApiResponse(response.statusCode(), response.body()))
+                .exceptionally(error -> {
+                    IvrmMinecraftActivityMod.LOGGER.warn("Activity API request failed method={} path={} eventId={}", method, pathWithQuery, eventId, error);
+                    return new ApiResponse(599, "");
+                });
+    }
+
+    public record ApiResponse(int statusCode, String body) {
+        public boolean isSuccess() {
+            return statusCode >= 200 && statusCode < 300;
+        }
     }
 }
