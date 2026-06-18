@@ -1,6 +1,7 @@
 import type { Database } from '../db/client.js';
 import { getMinecraftAccount } from '../repositories/minecraft-account-repository.js';
 import {
+  attachRewardGrantToRandomRewardDraw,
   createDailyRandomRewardDraw,
   createRewardGrant,
   findDailyRandomRewardDraw,
@@ -58,6 +59,7 @@ export async function drawDailyRandomReward(db: Database, input: DrawDailyRandom
       ok: true,
       alreadyDrawn: true,
       drawDate,
+      rewardGrantId: existingDraw.rewardGrantId,
       reward: {
         rarity: existingDraw.rarity,
         rewardName: existingDraw.rewardName,
@@ -92,21 +94,12 @@ export async function drawDailyRandomReward(db: Database, input: DrawDailyRandom
     return { ok: false, error: 'reward_command_not_allowed', drawDate };
   }
 
-  const grant = await createRewardGrant(db, {
-    serverId: input.serverId,
-    minecraftUuid: input.minecraftUuid,
-    rewardType: 'daily_random',
-    rewardName: selectedItem.rewardName,
-    commandsJson: selectedItem.commandsJson,
-  });
-
   const draw = await createDailyRandomRewardDraw(db, {
     serverId: input.serverId,
     minecraftUuid: input.minecraftUuid,
     date: drawDate,
     poolId: pool.id,
     rewardItemId: selectedItem.id,
-    rewardGrantId: grant.id,
     rarity: selectedItem.rarity,
     rewardName: selectedItem.rewardName,
     probability,
@@ -123,6 +116,7 @@ export async function drawDailyRandomReward(db: Database, input: DrawDailyRandom
       ok: true,
       alreadyDrawn: true,
       drawDate,
+      rewardGrantId: raceDraw?.rewardGrantId ?? null,
       reward: raceDraw
         ? {
           rarity: raceDraw.rarity,
@@ -134,16 +128,28 @@ export async function drawDailyRandomReward(db: Database, input: DrawDailyRandom
     };
   }
 
+  const grant = await createRewardGrant(db, {
+    serverId: input.serverId,
+    minecraftUuid: input.minecraftUuid,
+    rewardType: 'daily_random',
+    rewardName: selectedItem.rewardName,
+    commandsJson: selectedItem.commandsJson,
+  });
+  const grantedDraw = await attachRewardGrantToRandomRewardDraw(db, {
+    drawId: draw.id,
+    rewardGrantId: grant.id,
+  });
+
   return {
     ok: true,
     alreadyDrawn: false,
     drawDate,
     rewardGrantId: grant.id,
     reward: {
-      rarity: draw.rarity,
-      rewardName: draw.rewardName,
-      probability: draw.probability,
-      status: draw.status,
+      rarity: grantedDraw.rarity,
+      rewardName: grantedDraw.rewardName,
+      probability: grantedDraw.probability,
+      status: grantedDraw.status,
     },
   };
 }
