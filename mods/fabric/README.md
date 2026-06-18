@@ -13,9 +13,30 @@ Server-side Fabric Mod for IVRM Minecraft Activity.
 
 ```text
 /ivrm status
+/ivrm rewards
+/ivrm rewards claim
+/ivrm rewards claim all
+/ivrm reward-help
 /ivrm admin reload
 /ivrm admin flush
 ```
+
+## Reward claim flow
+
+```text
+/ivrm rewards
+  -> show pending rewards
+
+/ivrm rewards claim
+  -> deliver the oldest pending reward
+  -> send ack to API
+  -> reward_grant status=delivered
+
+/ivrm rewards claim all
+  -> deliver all pending rewards returned by API
+```
+
+MVP delivery executes only API-allowlisted `give {player} ...` commands.
 
 ## Config
 
