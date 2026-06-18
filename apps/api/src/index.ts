@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+import { internalWebRoutes } from './routes/internal-web.js';
 import { minecraftRoutes } from './routes/minecraft.js';
 import { minecraftRewardRoutes } from './routes/minecraft-rewards.js';
 
@@ -8,6 +9,7 @@ const app = new Hono();
 app.get('/healthz', (c) => c.json({ ok: true, service: 'ivrm-minecraft-activity-api' }));
 app.route('/v1/minecraft', minecraftRewardRoutes);
 app.route('/v1/minecraft', minecraftRoutes);
+app.route('/v1/minecraft', internalWebRoutes);
 
 const port = Number(process.env.PORT ?? 8080);
 
