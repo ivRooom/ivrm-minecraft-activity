@@ -1,8 +1,30 @@
-import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, boolean } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  date as pgDate,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+};
+
+const statCounters = {
+  loginCount: integer('login_count').notNull().default(0),
+  activeSeconds: integer('active_seconds').notNull().default(0),
+  afkSeconds: integer('afk_seconds').notNull().default(0),
+  deathCount: integer('death_count').notNull().default(0),
+  chatCount: integer('chat_count').notNull().default(0),
+  blockPlaceCount: integer('block_place_count').notNull().default(0),
+  blockBreakCount: integer('block_break_count').notNull().default(0),
+  advancementCount: integer('advancement_count').notNull().default(0),
 };
 
 export const minecraftServers = pgTable('minecraft_servers', {
@@ -71,4 +93,47 @@ export const minecraftSessionHeartbeats = pgTable('minecraft_session_heartbeats'
 }, (table) => ({
   sessionSentAtIdx: index('idx_minecraft_heartbeats_session_sent_at').on(table.sessionId, table.sentAt.desc()),
   serverIdIdx: index('idx_minecraft_heartbeats_server_id').on(table.serverId),
+}));
+
+export const minecraftDailyStats = pgTable('minecraft_daily_stats', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serverId: text('server_id').notNull().references(() => minecraftServers.id),
+  minecraftUuid: text('minecraft_uuid').notNull(),
+  date: pgDate('date', { mode: 'string' }).notNull(),
+  ...statCounters,
+  ...timestamps,
+}, (table) => ({
+  uniqueDailyPlayer: uniqueIndex('minecraft_daily_stats_server_uuid_date_unique').on(
+    table.serverId,
+    table.minecraftUuid,
+    table.date,
+  ),
+  serverDateActiveIdx: index('idx_minecraft_daily_stats_server_date_active').on(
+    table.serverId,
+    table.date,
+    table.activeSeconds,
+  ),
+  uuidDateIdx: index('idx_minecraft_daily_stats_uuid_date').on(table.minecraftUuid, table.date),
+}));
+
+export const minecraftMonthlyStats = pgTable('minecraft_monthly_stats', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serverId: text('server_id').notNull().references(() => minecraftServers.id),
+  minecraftUuid: text('minecraft_uuid').notNull(),
+  yearMonth: text('year_month').notNull(),
+  loginDays: integer('login_days').notNull().default(0),
+  ...statCounters,
+  ...timestamps,
+}, (table) => ({
+  uniqueMonthlyPlayer: uniqueIndex('minecraft_monthly_stats_server_uuid_month_unique').on(
+    table.serverId,
+    table.minecraftUuid,
+    table.yearMonth,
+  ),
+  serverMonthActiveIdx: index('idx_minecraft_monthly_stats_server_month_active').on(
+    table.serverId,
+    table.yearMonth,
+    table.activeSeconds,
+  ),
+  uuidMonthIdx: index('idx_minecraft_monthly_stats_uuid_month').on(table.minecraftUuid, table.yearMonth),
 }));
