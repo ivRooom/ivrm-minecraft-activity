@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import {
   minecraftRandomRewardDraws,
@@ -135,4 +135,95 @@ export async function attachRewardGrantToRandomRewardDraw(db: Database, input: {
     });
 
   return draw;
+}
+
+export async function listPendingRewardGrants(db: Database, input: {
+  serverId: string;
+  minecraftUuid: string;
+  limit?: number;
+}) {
+  return db
+    .select({
+      id: minecraftRewardGrants.id,
+      rewardType: minecraftRewardGrants.rewardType,
+      rewardName: minecraftRewardGrants.rewardName,
+      commandsJson: minecraftRewardGrants.commandsJson,
+      grantedAt: minecraftRewardGrants.grantedAt,
+      expiresAt: minecraftRewardGrants.expiresAt,
+    })
+    .from(minecraftRewardGrants)
+    .where(and(
+      eq(minecraftRewardGrants.serverId, input.serverId),
+      eq(minecraftRewardGrants.minecraftUuid, input.minecraftUuid),
+      eq(minecraftRewardGrants.status, 'pending'),
+    ))
+    .orderBy(asc(minecraftRewardGrants.grantedAt))
+    .limit(input.limit ?? 20);
+}
+
+export async function findRewardGrantForPlayer(db: Database, input: {
+  serverId: string;
+  minecraftUuid: string;
+  rewardGrantId: string;
+}) {
+  const [grant] = await db
+    .select({
+      id: minecraftRewardGrants.id,
+      rewardType: minecraftRewardGrants.rewardType,
+      rewardName: minecraftRewardGrants.rewardName,
+      status: minecraftRewardGrants.status,
+      deliveredAt: minecraftRewardGrants.deliveredAt,
+    })
+    .from(minecraftRewardGrants)
+    .where(and(
+      eq(minecraftRewardGrants.id, input.rewardGrantId),
+      eq(minecraftRewardGrants.serverId, input.serverId),
+      eq(minecraftRewardGrants.minecraftUuid, input.minecraftUuid),
+    ))
+    .limit(1);
+
+  return grant ?? null;
+}
+
+export async function markRewardGrantDelivered(db: Database, input: {
+  serverId: string;
+  minecraftUuid: string;
+  rewardGrantId: string;
+  deliveredAt?: Date;
+}) {
+  const deliveredAt = input.deliveredAt ?? new Date();
+  const [grant] = await db
+    .update(minecraftRewardGrants)
+    .set({
+      status: 'delivered',
+      deliveredAt,
+      updatedAt: deliveredAt,
+    })
+    .where(and(
+      eq(minecraftRewardGrants.id, input.rewardGrantId),
+      eq(minecraftRewardGrants.serverId, input.serverId),
+      eq(minecraftRewardGrants.minecraftUuid, input.minecraftUuid),
+      eq(minecraftRewardGrants.status, 'pending'),
+    ))
+    .returning({
+      id: minecraftRewardGrants.id,
+      rewardType: minecraftRewardGrants.rewardType,
+      rewardName: minecraftRewardGrants.rewardName,
+      status: minecraftRewardGrants.status,
+      deliveredAt: minecraftRewardGrants.deliveredAt,
+    });
+
+  if (!grant) {
+    return null;
+  }
+
+  await db
+    .update(minecraftRandomRewardDraws)
+    .set({
+      status: 'delivered',
+      deliveredAt,
+    })
+    .where(eq(minecraftRandomRewardDraws.rewardGrantId, input.rewardGrantId));
+
+  return grant;
 }
