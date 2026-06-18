@@ -9,6 +9,7 @@ import {
   recordMinecraftHeartbeat,
 } from '../repositories/minecraft-session-repository.js';
 import { createSignature, isFreshTimestamp, safeEqualHex } from '../security.js';
+import { aggregateClosedMinecraftSession } from '../services/minecraft-activity-aggregation-service.js';
 
 type Variables = {
   rawBody: string;
@@ -201,8 +202,19 @@ minecraftRoutes.post('/events/logout', async (c) => {
     minecraftName: payload.minecraftName,
     leftAt: parseEventTime(payload.leftAt),
   });
+  const aggregation = session?.leftAt
+    ? await aggregateClosedMinecraftSession(db, {
+      serverId: session.serverId,
+      minecraftUuid: session.minecraftUuid,
+      joinedAt: session.joinedAt,
+      leftAt: session.leftAt,
+      totalSeconds: session.totalSeconds,
+      activeSeconds: session.activeSeconds,
+      afkSeconds: session.afkSeconds,
+    })
+    : null;
 
-  return c.json({ ok: true, type: 'logout', session, duplicate: false });
+  return c.json({ ok: true, type: 'logout', session, aggregation, duplicate: false });
 });
 
 minecraftRoutes.post('/events/heartbeat', async (c) => {
