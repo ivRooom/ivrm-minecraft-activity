@@ -9,6 +9,21 @@ const ALLOWED_REWARD_COMMAND_PREFIXES = [
   'give {player} ',
 ];
 
+type RewardGrantAckSuccess = {
+  ok: true;
+  delivered: true;
+  alreadyDelivered: boolean;
+  rewardGrant: unknown;
+};
+
+type RewardGrantAckFailure = {
+  ok: false;
+  error: 'reward_grant_not_found' | 'reward_grant_not_pending';
+  status?: string;
+};
+
+type RewardGrantAckResult = RewardGrantAckSuccess | RewardGrantAckFailure;
+
 function normalizeRewardCommands(commandsJson: unknown): string[] {
   if (!Array.isArray(commandsJson)) {
     return [];
@@ -48,7 +63,7 @@ export async function ackRewardDelivery(db: Database, input: {
   rewardGrantId: string;
   deliveryStatus: 'delivered';
   deliveredAt?: Date;
-}) {
+}): Promise<RewardGrantAckResult> {
   const delivered = await markRewardGrantDelivered(db, {
     serverId: input.serverId,
     minecraftUuid: input.minecraftUuid,
