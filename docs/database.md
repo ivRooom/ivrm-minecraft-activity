@@ -7,12 +7,13 @@
 - Raw event logs are retained for a limited period.
 - Aggregated daily/monthly stats are retained long term.
 - Reward grants must be idempotent.
+- Daily random rewards are free only, once per Asia/Tokyo date, and are not tied to real money or donation benefits.
 - Browser clients do not connect to Supabase directly for this feature. `api.ivrm.jp` connects to PostgreSQL with `DATABASE_URL`.
 - Tables in `public` must have RLS enabled and no public policies until a direct Data API use case is explicitly designed.
 
 ## MVP tables
 
-The first persistence milestone stores signed Minecraft events, session state, and activity aggregates.
+The first persistence milestone stores signed Minecraft events, session state, activity aggregates, and daily random reward grants.
 
 ```text
 minecraft_servers
@@ -22,6 +23,10 @@ minecraft_sessions
 minecraft_session_heartbeats
 minecraft_daily_stats
 minecraft_monthly_stats
+minecraft_reward_pools
+minecraft_reward_items
+minecraft_reward_grants
+minecraft_random_reward_draws
 ```
 
 ## Core tables planned later
@@ -32,10 +37,6 @@ minecraft_player_counters
 minecraft_dimension_times
 minecraft_afk_periods
 minecraft_reward_rules
-minecraft_reward_pools
-minecraft_reward_items
-minecraft_reward_grants
-minecraft_random_reward_draws
 minecraft_ranking_snapshots
 minecraft_ranking_posts
 minecraft_award_roles
@@ -119,19 +120,6 @@ replaced
 
 `replaced` is used when a new login arrives while an old active session remains open.
 
-## minecraft_session_heartbeats
-
-```sql
-id uuid primary key
-session_id uuid null references minecraft_sessions(id) on delete cascade
-server_id text not null references minecraft_servers(id)
-minecraft_uuid text not null
-dimension text null
-afk boolean not null default false
-sent_at timestamptz not null
-created_at timestamptz not null default now()
-```
-
 ## minecraft_daily_stats
 
 ```sql
@@ -177,6 +165,87 @@ unique(server_id, minecraft_uuid, year_month)
 
 `login_days` increments only when the first daily row for a player/date is created.
 
+## minecraft_reward_pools
+
+```sql
+id uuid primary key
+server_id text not null references minecraft_servers(id)
+pool_type text not null
+name text not null
+enabled boolean not null default true
+timezone text not null default 'Asia/Tokyo'
+reset_time text not null default '00:00'
+draw_limit_per_day integer not null default 1
+require_discord_link boolean not null default true
+created_at timestamptz not null default now()
+updated_at timestamptz not null default now()
+```
+
+Initial daily random pool:
+
+```text
+server_id: ivrm-craft
+pool_type: daily_random
+require_discord_link: true
+draw_limit_per_day: 1
+```
+
+## minecraft_reward_items
+
+```sql
+id uuid primary key
+pool_id uuid not null references minecraft_reward_pools(id)
+rarity text not null
+weight integer not null
+reward_name text not null
+commands_json jsonb not null
+enabled boolean not null default true
+created_at timestamptz not null default now()
+updated_at timestamptz not null default now()
+```
+
+MVP command allowlist is `give {player} ...` only.
+
+## minecraft_reward_grants
+
+```sql
+id uuid primary key
+server_id text not null references minecraft_servers(id)
+minecraft_uuid text not null
+reward_rule_id uuid null
+reward_type text not null
+reward_name text not null
+status text not null default 'pending'
+commands_json jsonb not null
+granted_at timestamptz not null default now()
+delivered_at timestamptz null
+expires_at timestamptz null
+created_at timestamptz not null default now()
+updated_at timestamptz not null default now()
+```
+
+Daily random rewards create a `pending` grant. Delivery is handled by the claim/ack flow.
+
+## minecraft_random_reward_draws
+
+```sql
+id uuid primary key
+server_id text not null references minecraft_servers(id)
+minecraft_uuid text not null
+date date not null
+pool_id uuid not null references minecraft_reward_pools(id)
+reward_item_id uuid not null references minecraft_reward_items(id)
+reward_grant_id uuid null references minecraft_reward_grants(id)
+rarity text not null
+reward_name text not null
+probability numeric(6, 3) not null
+status text not null default 'granted'
+drawn_at timestamptz not null default now()
+delivered_at timestamptz null
+created_at timestamptz not null default now()
+unique(server_id, minecraft_uuid, date)
+```
+
 ## Aggregation behavior
 
 ```text
@@ -188,34 +257,17 @@ logout event
   -> upsert minecraft_monthly_stats
 ```
 
-Example:
+## Daily random reward behavior
 
 ```text
-login:  2026-06-17 23:30 Asia/Tokyo
-logout: 2026-06-18 01:30 Asia/Tokyo
-
-minecraft_daily_stats:
-2026-06-17: 30 minutes
-2026-06-18: 90 minutes
-```
-
-## Important indexes
-
-```sql
-create unique index minecraft_accounts_minecraft_uuid_unique on minecraft_accounts(minecraft_uuid);
-create unique index minecraft_event_logs_event_id_unique on minecraft_event_logs(event_id);
-create index idx_minecraft_event_logs_server_received_at on minecraft_event_logs(server_id, received_at desc);
-create index idx_minecraft_event_logs_event_type on minecraft_event_logs(event_type);
-create index idx_minecraft_sessions_active on minecraft_sessions(server_id, minecraft_uuid, status) where status = 'active';
-create index idx_minecraft_sessions_uuid_joined_at on minecraft_sessions(minecraft_uuid, joined_at desc);
-create index idx_minecraft_heartbeats_session_sent_at on minecraft_session_heartbeats(session_id, sent_at desc);
-create index idx_minecraft_heartbeats_server_id on minecraft_session_heartbeats(server_id);
-create unique index minecraft_daily_stats_server_uuid_date_unique on minecraft_daily_stats(server_id, minecraft_uuid, date);
-create index idx_minecraft_daily_stats_server_date_active on minecraft_daily_stats(server_id, date, active_seconds);
-create index idx_minecraft_daily_stats_uuid_date on minecraft_daily_stats(minecraft_uuid, date);
-create unique index minecraft_monthly_stats_server_uuid_month_unique on minecraft_monthly_stats(server_id, minecraft_uuid, year_month);
-create index idx_minecraft_monthly_stats_server_month_active on minecraft_monthly_stats(server_id, year_month, active_seconds);
-create index idx_minecraft_monthly_stats_uuid_month on minecraft_monthly_stats(minecraft_uuid, year_month);
+draw request
+  -> verify HMAC
+  -> check Discord link
+  -> check existing draw for Asia/Tokyo date
+  -> select weighted reward item
+  -> create random_reward_draw
+  -> create pending reward_grant
+  -> attach grant to draw
 ```
 
 ## Supabase notes

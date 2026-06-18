@@ -4,6 +4,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -136,4 +137,74 @@ export const minecraftMonthlyStats = pgTable('minecraft_monthly_stats', {
     table.activeSeconds,
   ),
   uuidMonthIdx: index('idx_minecraft_monthly_stats_uuid_month').on(table.minecraftUuid, table.yearMonth),
+}));
+
+export const minecraftRewardPools = pgTable('minecraft_reward_pools', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serverId: text('server_id').notNull().references(() => minecraftServers.id),
+  poolType: text('pool_type').notNull(),
+  name: text('name').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  timezone: text('timezone').notNull().default('Asia/Tokyo'),
+  resetTime: text('reset_time').notNull().default('00:00'),
+  drawLimitPerDay: integer('draw_limit_per_day').notNull().default(1),
+  requireDiscordLink: boolean('require_discord_link').notNull().default(true),
+  ...timestamps,
+}, (table) => ({
+  serverPoolTypeIdx: index('idx_minecraft_reward_pools_server_type').on(table.serverId, table.poolType),
+}));
+
+export const minecraftRewardItems = pgTable('minecraft_reward_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  poolId: uuid('pool_id').notNull().references(() => minecraftRewardPools.id, { onDelete: 'cascade' }),
+  rarity: text('rarity').notNull(),
+  weight: integer('weight').notNull(),
+  rewardName: text('reward_name').notNull(),
+  commandsJson: jsonb('commands_json').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  ...timestamps,
+}, (table) => ({
+  poolEnabledIdx: index('idx_minecraft_reward_items_pool_enabled').on(table.poolId, table.enabled),
+}));
+
+export const minecraftRewardGrants = pgTable('minecraft_reward_grants', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serverId: text('server_id').notNull().references(() => minecraftServers.id),
+  minecraftUuid: text('minecraft_uuid').notNull(),
+  rewardRuleId: uuid('reward_rule_id'),
+  rewardType: text('reward_type').notNull(),
+  rewardName: text('reward_name').notNull(),
+  status: text('status').notNull().default('pending'),
+  commandsJson: jsonb('commands_json').notNull(),
+  grantedAt: timestamp('granted_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  deliveredAt: timestamp('delivered_at', { withTimezone: true, mode: 'date' }),
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }),
+  ...timestamps,
+}, (table) => ({
+  pendingIdx: index('idx_minecraft_reward_grants_pending').on(table.serverId, table.minecraftUuid, table.status),
+}));
+
+export const minecraftRandomRewardDraws = pgTable('minecraft_random_reward_draws', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serverId: text('server_id').notNull().references(() => minecraftServers.id),
+  minecraftUuid: text('minecraft_uuid').notNull(),
+  date: pgDate('date', { mode: 'string' }).notNull(),
+  poolId: uuid('pool_id').notNull().references(() => minecraftRewardPools.id),
+  rewardItemId: uuid('reward_item_id').notNull().references(() => minecraftRewardItems.id),
+  rewardGrantId: uuid('reward_grant_id').references(() => minecraftRewardGrants.id),
+  rarity: text('rarity').notNull(),
+  rewardName: text('reward_name').notNull(),
+  probability: numeric('probability', { precision: 6, scale: 3 }).notNull(),
+  status: text('status').notNull().default('granted'),
+  drawnAt: timestamp('drawn_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  deliveredAt: timestamp('delivered_at', { withTimezone: true, mode: 'date' }),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueDailyDraw: uniqueIndex('minecraft_random_reward_draws_server_uuid_date_unique').on(
+    table.serverId,
+    table.minecraftUuid,
+    table.date,
+  ),
+  serverDateIdx: index('idx_minecraft_random_reward_draws_server_date').on(table.serverId, table.date),
+  uuidDateIdx: index('idx_minecraft_random_reward_draws_uuid_date').on(table.minecraftUuid, table.date),
 }));

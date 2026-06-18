@@ -28,6 +28,7 @@ METHOD + "\n" + PATH + "\n" + TIMESTAMP + "\n" + EVENT_ID + "\n" + BODY
 | POST | `/v1/minecraft/events/heartbeat` | heartbeat |
 | POST | `/v1/minecraft/events/afk` | AFK start/end |
 | POST | `/v1/minecraft/events/player-stat` | death/chat/block/advancement counters |
+| POST | `/v1/minecraft/rewards/daily-random/draw` | daily free random reward draw |
 | GET | `/v1/minecraft/rewards/pending?serverId=ivrm-craft&uuid=...` | pending rewards |
 | POST | `/v1/minecraft/rewards/ack` | reward delivery ack |
 | GET | `/v1/minecraft/server-config/ivrm-craft` | server-specific config |
@@ -85,3 +86,42 @@ METHOD + "\n" + PATH + "\n" + TIMESTAMP + "\n" + EVENT_ID + "\n" + BODY
   "pendingRewardCount": 1
 }
 ```
+
+## Daily random reward draw request example
+
+```json
+{
+  "serverId": "ivrm-craft",
+  "minecraftUuid": "00000000-0000-0000-0000-000000000000",
+  "minecraftName": "ivuruGG"
+}
+```
+
+## Daily random reward draw response example
+
+```json
+{
+  "ok": true,
+  "alreadyDrawn": false,
+  "drawDate": "2026-06-18",
+  "rewardGrantId": "00000000-0000-0000-0000-000000000000",
+  "reward": {
+    "rarity": "common",
+    "rewardName": "パン 8個",
+    "probability": "20.000",
+    "status": "granted"
+  }
+}
+```
+
+If the Minecraft account is not linked to Discord, the API returns:
+
+```json
+{
+  "ok": false,
+  "error": "discord_link_required",
+  "drawDate": "2026-06-18"
+}
+```
+
+The draw API creates a pending `minecraft_reward_grants` row. Actual delivery is handled by the rewards claim/ack flow in a later phase.
