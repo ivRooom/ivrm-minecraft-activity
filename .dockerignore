@@ -1,0 +1,25 @@
+.git
+.github
+
+node_modules
+**/node_modules
+
+.env
+.env.*
+*.log
+.DS_Store
+
+coverage
+**/coverage
+
+dist
+**/dist
+build
+**/build
+
+# Cloud Run only builds apps/api. Do not send the Minecraft loader projects
+# or non-runtime documentation/specs into the container build context.
+mods/
+docs/
+integrations/
+*.md
