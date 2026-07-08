@@ -11,9 +11,9 @@ app.get('/', (c) => c.json(healthResponse));
 app.get('/healthz', (c) => c.json(healthResponse));
 app.get('/readyz', (c) => c.json(healthResponse));
 app.get('/livez', (c) => c.json(healthResponse));
+app.route('/v1/minecraft', internalWebRoutes);
 app.route('/v1/minecraft', minecraftRewardRoutes);
 app.route('/v1/minecraft', minecraftRoutes);
-app.route('/v1/minecraft', internalWebRoutes);
 
 const port = Number(process.env.PORT ?? 8080);
 
