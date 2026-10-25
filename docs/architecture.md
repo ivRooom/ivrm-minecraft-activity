@@ -1,5 +1,7 @@
 # Architecture
 
+> **2026-10-26 maintenance / migration-source notice:** 本RepositoryのFabric 1.20.1、`ivrm-craft`、Lunaria、旧API/DBは歴史的な実装・移行資料です。現行のOrganization targetは、Producer `ivrm-mcmod`（NeoForge連携）、Contract `ivrm-contracts`、Canonical API `ivrm-web`、Canonical Data `Supabase/ivrm-core`、Monitoring `ivrm-dashboard` に責務を分離します。**この文書だけを現行本番サーバー設定・API/DB適用手順と解釈しないでください。** 機能移管・本番稼働の進捗は関連各Repo/Issue/Providerで個別確認します。[Platform Target Architecture](https://github.com/ivRooom/ivrm-platform/blob/main/docs/minecraft-integration-architecture.md) / [Contract](https://github.com/ivRooom/ivrm-contracts/blob/main/docs/MINECRAFT-ACTIVITY-V1.md)。
+
 ## Overview
 
 ```text
