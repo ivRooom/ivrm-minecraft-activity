@@ -1,45 +1,10 @@
-# Development
+# Legacy Minecraft Activity record: development
 
-## Fabric Mod
+> Historical Fabric 1.20.1 / legacy API reference. Not an operating procedure for the current NeoForge, ivrm-web, or Supabase runtimes.
 
-Local build target:
+- [Full original document at the immutable GitHub commit (public source)](https://github.com/ivRooom/ivrm-minecraft-activity/blob/afabe3b9371670a80232f5a8fd943860c7bbde6b/docs/development.md)
+- [Notion Historical copy (ivRooom workspace access required)](https://app.notion.com/p/4087322f39fa81a2a3c3eaecdb32cc02)
+- [Migration status and current owner boundaries](migration-status-20261026.md)
+- [Internal Notion historical index (workspace access required)](https://app.notion.com/p/4087322f39fa8188bddcc8d7d6b55cc2)
 
-```bash
-cd mods/fabric
-gradle build
-```
-
-Recommended local tools:
-
-```text
-Java 17
-Gradle 8.12.1
-```
-
-Fabric Loom `1.10-SNAPSHOT` requires Gradle 8.12 or newer. The GitHub Actions Fabric Build job uses `gradle/actions/setup-gradle` with Gradle 8.12.1. A Gradle wrapper can be added after the Loom/Gradle combination is validated in CI.
-
-## API
-
-```bash
-pnpm install
-pnpm api:dev
-pnpm api:typecheck
-```
-
-## Local config
-
-The Fabric Mod creates this file on first startup:
-
-```text
-config/ivrm-minecraft-activity/config.json
-```
-
-Set `api.serverSecret` before connecting to a real API environment.
-
-## Environment variables
-
-```text
-PORT=8080
-IVRM_SERVER_SECRET=change-me
-IVRM_SERVER_SECRET_IVRM_CRAFT=change-me
-```
+The Notion pages are not public. External readers should use the immutable GitHub source above. Keep legacy source code and migration acceptance gates for traceability.

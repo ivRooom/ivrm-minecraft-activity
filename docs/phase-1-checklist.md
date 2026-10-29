@@ -1,37 +1,10 @@
-# Phase 1 Checklist
+# Legacy Minecraft Activity record: phase-1-checklist
 
-## Fabric Mod
+> Historical Fabric 1.20.1 / legacy API reference. Not an operating procedure for the current NeoForge, ivrm-web, or Supabase runtimes.
 
-- [x] server-only metadata
-- [x] config loader
-- [x] HMAC signature utility
-- [x] API client
-- [x] local retry queue
-- [x] login event scaffold
-- [x] logout event scaffold
-- [x] heartbeat scaffold
-- [x] AFK scaffold
-- [x] admin commands scaffold
-- [x] Fabric build check on GitHub Actions
-- [ ] Gradle wrapper
-- [ ] reward claim command
-- [ ] death/stat event collection
-- [ ] block counter batching
-- [ ] dimension time aggregation
+- [Full original document at the immutable GitHub commit (public source)](https://github.com/ivRooom/ivrm-minecraft-activity/blob/afabe3b9371670a80232f5a8fd943860c7bbde6b/docs/phase-1-checklist.md)
+- [Notion Historical copy (ivRooom workspace access required)](https://app.notion.com/p/4087322f39fa8157adc2caa7b154374c)
+- [Migration status and current owner boundaries](migration-status-20261026.md)
+- [Internal Notion historical index (workspace access required)](https://app.notion.com/p/4087322f39fa8188bddcc8d7d6b55cc2)
 
-## API
-
-- [x] Hono server scaffold
-- [x] health check
-- [x] HMAC validation scaffold
-- [x] event route scaffold
-- [ ] DB schema and migrations
-- [ ] idempotency persistence
-- [ ] session aggregation
-- [ ] reward engine integration
-
-## Integration
-
-- [ ] member.ivrm.jp API client
-- [ ] admin.ivrm.jp reward management
-- [ ] Lunaria monthly ranking command
+The Notion pages are not public. External readers should use the immutable GitHub source above. Keep legacy source code and migration acceptance gates for traceability.

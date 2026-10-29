@@ -1,53 +1,10 @@
-# Roadmap
+# Legacy Minecraft Activity record: roadmap
 
-## Phase 1: Fabric Mod MVP
+> Historical Fabric 1.20.1 / legacy API reference. Not an operating procedure for the current NeoForge, ivrm-web, or Supabase runtimes.
 
-- `/ivrm status`
-- config load
-- login event
-- logout event
-- heartbeat
-- basic AFK detection
-- HMAC-SHA256 signature
-- local retry queue
+- [Full original document at the immutable GitHub commit (public source)](https://github.com/ivRooom/ivrm-minecraft-activity/blob/afabe3b9371670a80232f5a8fd943860c7bbde6b/docs/roadmap.md)
+- [Notion Historical copy (ivRooom workspace access required)](https://app.notion.com/p/4087322f39fa81fa941cedecf80ea7eb)
+- [Migration status and current owner boundaries](migration-status-20261026.md)
+- [Internal Notion historical index (workspace access required)](https://app.notion.com/p/4087322f39fa8188bddcc8d7d6b55cc2)
 
-## Phase 2: API MVP
-
-- Hono/Fastify API scaffold
-- event ingest endpoints
-- signature verification
-- session persistence
-- daily/monthly aggregation
-- Discord linked account check
-
-## Phase 3: Rewards
-
-- daily random reward
-- streak reward
-- playtime reward
-- mailbox claim flow
-- reward delivery ack
-- admin reward schema
-
-## Phase 4: Web integration
-
-- member.ivrm.jp activity page
-- member.ivrm.jp reward history
-- ranking page
-- admin.ivrm.jp reward management
-- admin.ivrm.jp player/session view
-
-## Phase 5: Lunaria integration
-
-- monthly ranking fetch
-- Discord embed post
-- award role target fetch
-- award role ack
-- manual repost command
-
-## Phase 6: Multi-loader support
-
-- shared Java core extraction
-- Paper plugin
-- NeoForge/Forge support
-- server-specific reward pools
+The Notion pages are not public. External readers should use the immutable GitHub source above. Keep legacy source code and migration acceptance gates for traceability.

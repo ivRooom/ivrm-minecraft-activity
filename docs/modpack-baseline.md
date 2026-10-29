@@ -1,27 +1,10 @@
-# Modpack Baseline
+# Legacy Minecraft Activity record: modpack-baseline
 
-## Runtime target
+> Historical Fabric 1.20.1 / legacy API reference. Not an operating procedure for the current NeoForge, ivrm-web, or Supabase runtimes.
 
-- Minecraft: 1.20.1
-- Fabric Loader: 0.19.3
-- Fabric API: 0.92.9+1.20.1
-- Java: 17
-- Server ID: `ivrm-craft`
-- Display name: いゔる。ーむ くらふと
+- [Full original document at the immutable GitHub commit (public source)](https://github.com/ivRooom/ivrm-minecraft-activity/blob/afabe3b9371670a80232f5a8fd943860c7bbde6b/docs/modpack-baseline.md)
+- [Notion Historical copy (ivRooom workspace access required)](https://app.notion.com/p/4087322f39fa8157adc2caa7b154374c)
+- [Migration status and current owner boundaries](migration-status-20261026.md)
+- [Internal Notion historical index (workspace access required)](https://app.notion.com/p/4087322f39fa8188bddcc8d7d6b55cc2)
 
-## Design implication
-
-The Mod must stay server-only and avoid adding custom items, blocks, or client-required assets.
-
-Activity data is sent to API asynchronously and must not block the server tick thread.
-
-## Resource policy
-
-The target server is small community scale. Heavy aggregation and ranking logic belongs to the API/DB layer, not the Minecraft server process.
-
-## Selected event strategy
-
-- Send login/logout immediately.
-- Send heartbeat every 5 minutes.
-- Batch high-frequency counters before API delivery.
-- Use local queue when API is unavailable.
+The Notion pages are not public. External readers should use the immutable GitHub source above. Keep legacy source code and migration acceptance gates for traceability.
