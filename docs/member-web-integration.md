@@ -1,56 +1,10 @@
-# member.ivrm.jp / admin.ivrm.jp Integration
+# Legacy Minecraft Activity record: member-web-integration
 
-## Repository boundary
+> Historical Fabric 1.20.1 / legacy API reference. Not an operating procedure for the current NeoForge, ivrm-web, or Supabase runtimes.
 
-UI pages should live in `ivrm-web`.
+- [Full historical text archived in Notion](https://app.notion.com/p/4087322f39fa814ea1b0d4ca72b6c662)
+- [Original GitHub source at immutable pre-archive commit](https://github.com/ivRooom/ivrm-minecraft-activity/blob/afabe3b9371670a80232f5a8fd943860c7bbde6b/docs/member-web-integration.md)
+- [Migration status and current owner boundaries](migration-status-20261026.md)
+- [Minecraft historical documentation index](https://app.notion.com/p/4087322f39fa8188bddcc8d7d6b55cc2)
 
-This repository owns:
-
-- API contracts
-- Activity API implementation
-- Mod implementation
-- reward and ranking domain logic
-
-## Integration flow
-
-```text
-member.ivrm.jp / admin.ivrm.jp
-  -> ivrm-web server-side API route
-  -> Minecraft Activity internal API
-  -> Supabase PostgreSQL
-```
-
-`ivrm-web` must not access the Minecraft Activity database directly.
-
-## Internal API
-
-The Minecraft Activity API exposes server-to-server read endpoints under:
-
-```text
-/v1/minecraft/internal
-```
-
-See `docs/internal-web-api.md` for endpoint details.
-
-## member pages
-
-```text
-/member/minecraft
-/member/minecraft/activity
-/member/minecraft/rewards
-/member/minecraft/ranking
-```
-
-## admin pages
-
-```text
-/admin/minecraft/players
-/admin/minecraft/sessions
-/admin/minecraft/rewards
-/admin/minecraft/rankings
-/admin/minecraft/settings
-```
-
-## API client
-
-`ivrm-web` should call `https://api.ivrm.jp` from the server side and include the internal API secret header.
+Keep the legacy source code and migration acceptance gates for traceability. Check the new owning repositories before making any production change.

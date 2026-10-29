@@ -1,40 +1,10 @@
-# Testing Strategy
+# Legacy Minecraft Activity record: testing
 
-## Fabric Mod
+> Historical Fabric 1.20.1 / legacy API reference. Not an operating procedure for the current NeoForge, ivrm-web, or Supabase runtimes.
 
-Initial checks:
+- [Full historical text archived in Notion](https://app.notion.com/p/4087322f39fa81fa941cedecf80ea7eb)
+- [Original GitHub source at immutable pre-archive commit](https://github.com/ivRooom/ivrm-minecraft-activity/blob/afabe3b9371670a80232f5a8fd943860c7bbde6b/docs/testing.md)
+- [Migration status and current owner boundaries](migration-status-20261026.md)
+- [Minecraft historical documentation index](https://app.notion.com/p/4087322f39fa8188bddcc8d7d6b55cc2)
 
-```bash
-cd mods/fabric
-gradle build
-```
-
-Runtime checks on a local test server:
-
-```text
-/ivrm status
-/ivrm admin reload
-/ivrm admin flush
-```
-
-Expected behavior:
-
-- config file is generated on first startup
-- login/logout events are sent asynchronously
-- API failure writes JSONL queue entries
-- server gameplay continues when API is unavailable
-
-## API
-
-```bash
-pnpm install
-pnpm api:typecheck
-pnpm api:dev
-```
-
-Expected behavior:
-
-- `GET /healthz` returns `{ ok: true }`
-- event endpoints reject missing HMAC headers
-- event endpoints reject stale timestamps
-- event endpoints accept valid signed requests
+Keep the legacy source code and migration acceptance gates for traceability. Check the new owning repositories before making any production change.

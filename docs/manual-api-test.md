@@ -1,48 +1,10 @@
-# Manual API Test
+# Legacy Minecraft Activity record: manual-api-test
 
-## Environment
+> Historical Fabric 1.20.1 / legacy API reference. Not an operating procedure for the current NeoForge, ivrm-web, or Supabase runtimes.
 
-```text
-IVRM_SERVER_SECRET=change-me
-PORT=8080
-```
+- [Full historical text archived in Notion](https://app.notion.com/p/4087322f39fa814ea1b0d4ca72b6c662)
+- [Original GitHub source at immutable pre-archive commit](https://github.com/ivRooom/ivrm-minecraft-activity/blob/afabe3b9371670a80232f5a8fd943860c7bbde6b/docs/manual-api-test.md)
+- [Migration status and current owner boundaries](migration-status-20261026.md)
+- [Minecraft historical documentation index](https://app.notion.com/p/4087322f39fa8188bddcc8d7d6b55cc2)
 
-## Target
-
-```text
-POST /v1/minecraft/events/login
-```
-
-## Headers
-
-```text
-X-IVRM-Server-Id
-X-IVRM-Timestamp
-X-IVRM-Event-Id
-X-IVRM-Signature
-```
-
-A script-based test should be added after API persistence is implemented.
-
-## Internal Web API Routing
-
-```text
-GET /v1/minecraft/internal/admin/players
-```
-
-Without `X-IVRM-Internal-Secret`, the endpoint should return HTTP 401:
-
-```json
-{ "ok": false, "error": "unauthorized" }
-```
-
-With a valid `X-IVRM-Internal-Secret`, the request should reach the internal API handler.
-Minecraft HMAC headers are not used for `/v1/minecraft/internal/*`.
-
-Public Minecraft endpoints should still require HMAC headers. For example,
-`POST /v1/minecraft/events/login` and `GET /v1/minecraft/rewards/pending`
-without HMAC headers should return HTTP 401:
-
-```json
-{ "ok": false, "error": "missing_signature_headers" }
-```
+Keep the legacy source code and migration acceptance gates for traceability. Check the new owning repositories before making any production change.
