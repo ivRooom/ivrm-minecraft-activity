@@ -25,4 +25,5 @@ ENV NODE_ENV=production
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/apps/api/package.json ./package.json
 COPY --from=build /app/apps/api/node_modules ./node_modules
+USER node
 CMD ["node", "dist/index.js"]
