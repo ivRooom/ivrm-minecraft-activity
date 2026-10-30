@@ -9,6 +9,8 @@ on:
       - "package.json"
       - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
+      - "Dockerfile"
+      - "tests/**"
       - ".github/workflows/api-typecheck.yml"
   push:
     branches:
@@ -25,9 +27,12 @@ jobs:
           version: 10.12.1
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - run: pnpm install --no-frozen-lockfile
+          node-version: '22.23.4'
+      - run: pnpm install --frozen-lockfile
       - run: pnpm api:typecheck
+      - run: pnpm api:build
+      - name: Verify internal API security rejection and constant-time token checks
+        run: node --test tests/internal-web-security.test.mjs
 
   fabric-build:
     name: Fabric Build
@@ -56,3 +61,42 @@ jobs:
         with:
           name: fabric-build-log
           path: fabric-build.log
+
+  docker-security:
+    name: Docker ${{ matrix.dockerfile }} / ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            platform: amd64
+            dockerfile: Dockerfile
+          - runner: ubuntu-24.04-arm
+            platform: arm64
+            dockerfile: Dockerfile
+          - runner: ubuntu-24.04
+            platform: amd64
+            dockerfile: apps/api/Dockerfile
+          - runner: ubuntu-24.04-arm
+            platform: arm64
+            dockerfile: apps/api/Dockerfile
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify native runner architecture
+        shell: bash
+        run: test "$(dpkg --print-architecture)" = "${{ matrix.platform }}"
+      - name: Build final API image with frozen dependencies
+        run: docker build --platform linux/${{ matrix.platform }} -f ${{ matrix.dockerfile }} -t mc-activity:ci .
+      - name: Validate final container Node binary and non-root compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker image inspect --format '{{.Architecture}}' mc-activity:ci)" = "${{ matrix.platform }}"
+          test "$(docker run --rm --entrypoint node mc-activity:ci --version)" = v22.23.4
+          test "$(docker run --rm --entrypoint id mc-activity:ci -u)" = 1000
+          docker run --rm --entrypoint node mc-activity:ci -p 'process.versions.openssl'
+          # Import actual production dependencies from the final non-root image.
+          # This catches missing pnpm virtual-store targets in either Dockerfile.
+          docker run --rm --entrypoint node mc-activity:ci --input-type=module -e 'await import("hono"); await import("drizzle-orm");'
