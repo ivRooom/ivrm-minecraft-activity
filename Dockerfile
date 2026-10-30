@@ -54,4 +54,5 @@ COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/apps/api/package.json ./package.json
 
 EXPOSE 8080
+USER node
 CMD ["node", "dist/index.js"]
