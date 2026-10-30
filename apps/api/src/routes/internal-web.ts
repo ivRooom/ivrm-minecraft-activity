@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z, ZodError } from 'zod';
 import { getDatabase } from '../db/client.js';
+import { safeEqualSecret } from '../security.js';
 import {
   getMinecraftMemberOverview,
   listMinecraftAdminPlayers,
@@ -62,7 +63,7 @@ internalWebRoutes.use('/internal/*', async (c, next) => {
     return c.json({ ok: false, error: 'internal_api_secret_not_configured' }, 500);
   }
 
-  if (!providedSecret || providedSecret !== expectedSecret) {
+  if (!providedSecret || !safeEqualSecret(expectedSecret, providedSecret)) {
     return c.json({ ok: false, error: 'unauthorized' }, 401);
   }
 
