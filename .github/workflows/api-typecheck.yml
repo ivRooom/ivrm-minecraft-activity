@@ -97,3 +97,6 @@ jobs:
           test "$(docker run --rm --entrypoint node mc-activity:ci --version)" = v22.23.4
           test "$(docker run --rm --entrypoint id mc-activity:ci -u)" = 1000
           docker run --rm --entrypoint node mc-activity:ci -p 'process.versions.openssl'
+          # Import actual production dependencies from the final non-root image.
+          # This catches missing pnpm virtual-store targets in either Dockerfile.
+          docker run --rm --entrypoint node mc-activity:ci --input-type=module -e 'await import("hono"); await import("drizzle-orm");'
