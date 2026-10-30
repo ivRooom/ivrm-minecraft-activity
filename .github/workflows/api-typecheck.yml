@@ -10,6 +10,7 @@ on:
       - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
       - "Dockerfile"
+      - "tests/**"
       - ".github/workflows/api-typecheck.yml"
   push:
     branches:
@@ -29,6 +30,9 @@ jobs:
           node-version: '22.23.4'
       - run: pnpm install --frozen-lockfile
       - run: pnpm api:typecheck
+      - run: pnpm api:build
+      - name: Verify internal API security rejection and constant-time token checks
+        run: node --test tests/internal-web-security.test.mjs
 
   fabric-build:
     name: Fabric Build
