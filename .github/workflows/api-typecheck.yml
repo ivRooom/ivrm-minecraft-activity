@@ -91,4 +91,5 @@ jobs:
           set -euo pipefail
           test "$(docker image inspect --format '{{.Architecture}}' mc-activity:ci)" = "${{ matrix.platform }}"
           test "$(docker run --rm --entrypoint node mc-activity:ci --version)" = v22.23.4
+          test "$(docker run --rm --entrypoint id mc-activity:ci -u)" = 1000
           docker run --rm --entrypoint node mc-activity:ci -p 'process.versions.openssl'
