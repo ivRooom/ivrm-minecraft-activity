@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 export type SignatureInput = {
   method: string;
@@ -23,6 +23,18 @@ export function safeEqualHex(expected: string, actual: string): boolean {
   }
 
   return timingSafeEqual(expectedBuffer, actualBuffer);
+}
+
+
+/**
+ * Compare opaque API credentials without leaking a matching prefix or length
+ * through the comparison primitive. Callers must still enforce transport TLS,
+ * request limits and separate authorization for privileged actions.
+ */
+export function safeEqualSecret(expected: string, actual: string): boolean {
+  const expectedDigest = createHash('sha256').update(expected).digest();
+  const actualDigest = createHash('sha256').update(actual).digest();
+  return timingSafeEqual(expectedDigest, actualDigest);
 }
 
 export function isFreshTimestamp(timestamp: string, now = Date.now(), toleranceMs = 5 * 60 * 1000): boolean {
